@@ -20,6 +20,8 @@ class PrayerTimeService {
     double lng = _defaultLng;
 
     try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return _getFallbackTimes(now, today);
       final permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         final requested = await Geolocator.requestPermission();
@@ -28,7 +30,12 @@ class PrayerTimeService {
           return _getFallbackTimes(now, today);
         }
       }
-      final position = await Geolocator.getCurrentPosition();
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: LocationSettings(
+          accuracy: LocationAccuracy.low,
+          timeLimit: Duration(seconds: 8),
+        ),
+      );
       lat = position.latitude;
       lng = position.longitude;
     } catch (_) {
@@ -64,31 +71,24 @@ class PrayerTimeService {
     return result;
   }
 
-  static Map<String, DateTime> _getFallbackTimes(
-    DateTime now,
-    DateTime today,
-  ) {
+  static Map<String, DateTime> _getFallbackTimes(DateTime now, DateTime today) {
     return {
-      'fajr': DateTime(today.year, today.month, today.day, 5, 15)
-        .isAfter(now)
-        ? DateTime(today.year, today.month, today.day, 5, 15)
-        : DateTime(today.year, today.month, today.day + 1, 5, 15),
-      'dhuhr': DateTime(today.year, today.month, today.day, 12, 30)
-        .isAfter(now)
-        ? DateTime(today.year, today.month, today.day, 12, 30)
-        : DateTime(today.year, today.month, today.day + 1, 12, 30),
-      'asr': DateTime(today.year, today.month, today.day, 16, 0)
-        .isAfter(now)
-        ? DateTime(today.year, today.month, today.day, 16, 0)
-        : DateTime(today.year, today.month, today.day + 1, 16, 0),
-      'maghrib': DateTime(today.year, today.month, today.day, 18, 0)
-        .isAfter(now)
-        ? DateTime(today.year, today.month, today.day, 18, 0)
-        : DateTime(today.year, today.month, today.day + 1, 18, 0),
-      'isha': DateTime(today.year, today.month, today.day, 20, 0)
-        .isAfter(now)
-        ? DateTime(today.year, today.month, today.day, 20, 0)
-        : DateTime(today.year, today.month, today.day + 1, 20, 0),
+      'fajr': DateTime(today.year, today.month, today.day, 5, 15).isAfter(now)
+          ? DateTime(today.year, today.month, today.day, 5, 15)
+          : DateTime(today.year, today.month, today.day + 1, 5, 15),
+      'dhuhr': DateTime(today.year, today.month, today.day, 12, 30).isAfter(now)
+          ? DateTime(today.year, today.month, today.day, 12, 30)
+          : DateTime(today.year, today.month, today.day + 1, 12, 30),
+      'asr': DateTime(today.year, today.month, today.day, 16, 0).isAfter(now)
+          ? DateTime(today.year, today.month, today.day, 16, 0)
+          : DateTime(today.year, today.month, today.day + 1, 16, 0),
+      'maghrib':
+          DateTime(today.year, today.month, today.day, 18, 0).isAfter(now)
+          ? DateTime(today.year, today.month, today.day, 18, 0)
+          : DateTime(today.year, today.month, today.day + 1, 18, 0),
+      'isha': DateTime(today.year, today.month, today.day, 20, 0).isAfter(now)
+          ? DateTime(today.year, today.month, today.day, 20, 0)
+          : DateTime(today.year, today.month, today.day + 1, 20, 0),
     };
   }
 }

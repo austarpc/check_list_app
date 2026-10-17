@@ -4,10 +4,14 @@ import '../../../../core/models/task_model.dart';
 import '../../../../core/enums/task_priority.dart';
 
 class TaskRepository {
-  final FirebaseDatabase _database;
+  final FirebaseDatabase? _databaseOverride;
 
-  TaskRepository({FirebaseDatabase? database})
-      : _database = database ?? FirebaseDatabase.instance;
+  TaskRepository({FirebaseDatabase? database}) : _databaseOverride = database;
+
+  FirebaseDatabase get _database {
+    if (_databaseOverride != null) return _databaseOverride;
+    return FirebaseDatabase.instance;
+  }
 
   DatabaseReference _userTasksRef(String userId) {
     return _database.ref('users/$userId/tasks');

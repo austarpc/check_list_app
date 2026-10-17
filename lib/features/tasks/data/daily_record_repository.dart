@@ -4,10 +4,15 @@ import '../../../../core/models/daily_record.dart';
 import '../../../../core/utils/date_utils.dart';
 
 class DailyRecordRepository {
-  final FirebaseDatabase _database;
+  final FirebaseDatabase? _databaseOverride;
 
   DailyRecordRepository({FirebaseDatabase? database})
-      : _database = database ?? FirebaseDatabase.instance;
+    : _databaseOverride = database;
+
+  FirebaseDatabase get _database {
+    if (_databaseOverride != null) return _databaseOverride;
+    return FirebaseDatabase.instance;
+  }
 
   DatabaseReference _userRecordsRef(String userId) {
     return _database.ref('users/$userId/records');
@@ -17,7 +22,9 @@ class DailyRecordRepository {
     final key = DateUtils.formatDateKey(date);
     final snapshot = await _userRecordsRef(userId).child(key).get();
     if (!snapshot.exists) return null;
-    return DailyRecord.fromMap(Map<String, dynamic>.from(snapshot.value as Map));
+    return DailyRecord.fromMap(
+      Map<String, dynamic>.from(snapshot.value as Map),
+    );
   }
 
   Future<void> saveRecord(String userId, DailyRecord record) async {

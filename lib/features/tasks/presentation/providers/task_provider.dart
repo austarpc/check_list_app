@@ -16,9 +16,21 @@ class TaskNotifier extends StateNotifier<TaskState> {
   }
 
   void _loadTasks() {
-    _repository.watchTasks(_userId).listen((tasks) {
-      state = state.copyWith(tasks: tasks, isLoading: false);
-    });
+    try {
+      _repository
+          .watchTasks(_userId)
+          .listen(
+            (tasks) {
+              state = state.copyWith(tasks: tasks, isLoading: false);
+            },
+            onError: (_) {
+              state = state.copyWith(isLoading: false);
+            },
+          );
+    } catch (_) {
+      // Firebase unavailable — show empty state instead of crashing.
+      state = state.copyWith(isLoading: false);
+    }
   }
 
   bool isTaskCompleted(String taskId) {
@@ -68,9 +80,11 @@ final taskRepositoryProvider = Provider<TaskRepository>((ref) {
   return TaskRepository();
 });
 
-final taskProvider = StateNotifierProvider.family<TaskNotifier, TaskState, String>(
-  (ref, userId) {
-    final repository = ref.watch(taskRepositoryProvider);
-    return TaskNotifier(repository, userId);
-  },
-);
+final taskProvider =
+    StateNotifierProvider.family<TaskNotifier, TaskState, String>((
+      ref,
+      userId,
+    ) {
+      final repository = ref.watch(taskRepositoryProvider);
+      return TaskNotifier(repository, userId);
+    });

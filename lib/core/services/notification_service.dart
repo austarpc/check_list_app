@@ -10,7 +10,7 @@ import 'prayer_time_service.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _plugin =
-    FlutterLocalNotificationsPlugin();
+      FlutterLocalNotificationsPlugin();
 
   static Timer? _midnightTimer;
 
@@ -30,10 +30,7 @@ class NotificationService {
     const iosSettings = DarwinInitializationSettings();
 
     await _plugin.initialize(
-      const InitializationSettings(
-        android: androidSettings,
-        iOS: iosSettings,
-      ),
+      const InitializationSettings(android: androidSettings, iOS: iosSettings),
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
 
@@ -45,18 +42,24 @@ class NotificationService {
     if (kIsWeb) return;
 
     await _plugin
-      .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
-      ?.requestNotificationsPermission();
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.requestNotificationsPermission();
 
     await _plugin
-      .resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin>()
-      ?.requestPermissions(alert: true, sound: true, badge: false);
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >()
+        ?.requestPermissions(alert: true, sound: true, badge: false);
   }
 
   static Future<void> _createChannels() async {
-    final androidPlugin = AndroidFlutterLocalNotificationsPlugin();
+    final androidPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (androidPlugin == null) return;
     final channels = <AndroidNotificationChannel>[
       const AndroidNotificationChannel(
         'fajr_channel',
@@ -94,9 +97,7 @@ class NotificationService {
     }
   }
 
-  static Future<void> scheduleAll(
-    Map<String, dynamic> settingsMap,
-  ) async {
+  static Future<void> scheduleAll(Map<String, dynamic> settingsMap) async {
     if (kIsWeb) return;
 
     try {
@@ -181,12 +182,10 @@ class NotificationService {
     String body,
     DateTime time,
   ) async {
-    await _plugin.zonedSchedule(
-      id,
-      title,
-      body,
-      tz.TZDateTime.from(time, tz.local),
-      NotificationDetails(
+    try {
+      final scheduled = tz.TZDateTime.from(time, tz.local);
+      if (scheduled.isBefore(tz.TZDateTime.now(tz.local))) return;
+      final details = NotificationDetails(
         android: AndroidNotificationDetails(
           channelId,
           channelId,
@@ -195,11 +194,34 @@ class NotificationService {
           priority: Priority.high,
         ),
         iOS: const DarwinNotificationDetails(),
-      ),
-      androidScheduleMode: AndroidScheduleMode.alarmClock,
-      uiLocalNotificationDateInterpretation:
-        UILocalNotificationDateInterpretation.absoluteTime,
-    );
+      );
+      try {
+        await _plugin.zonedSchedule(
+          id,
+          title,
+          body,
+          scheduled,
+          details,
+          androidScheduleMode: AndroidScheduleMode.alarmClock,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+        );
+      } catch (_) {
+        // alarmClock needs SCHEDULE_EXACT_ALARM; fall back to inexact.
+        await _plugin.zonedSchedule(
+          id,
+          title,
+          body,
+          scheduled,
+          details,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+        );
+      }
+    } catch (e) {
+      debugPrint('Notification schedule failed: $e');
+    }
   }
 
   static void _startMidnightTimer() {
@@ -232,12 +254,14 @@ class NotificationService {
   }
 
   static void _onNotificationTapped(NotificationResponse response) {
-    final channelId = response.payload;
-    posthog.Posthog().capture(
-      eventName: 'notification_tapped',
-      properties: {
-        'type': channelId ?? 'unknown',
-      },
-    );
+    // PostHog is not configured in this app yet — never let analytics
+    // crash the notification callback.
+    try {
+      final channelId = response.payload;
+      posthog.Posthog().capture(
+        eventName: 'notification_tapped',
+        properties: {'type': channelId ?? 'unknown'},
+      );
+    } catch (_) {}
   }
 }

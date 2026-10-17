@@ -28,18 +28,18 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_ANDROID_API_KEY',
-    appId: 'YOUR_ANDROID_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    databaseURL: 'YOUR_DATABASE_URL',
+    apiKey: 'AIzaSyC14Dnwm5EK6TpqH4PnVzStfXLwINxZPWY',
+    appId: '1:1083781579807:android:89bf1ce934fc583033812a',
+    messagingSenderId: '1083781579807',
+    projectId: 'arpc-checklist',
+    databaseURL: 'https://arpc-checklist-default-rtdb.asia-southeast1.firebasedatabase.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR_IOS_API_KEY',
-    appId: 'YOUR_IOS_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    databaseURL: 'YOUR_DATABASE_URL',
+    apiKey: 'AIzaSyDMuGLr_Xq85Jt72zNEE4efXfIxE3EzCok',
+    appId: '1:1083781579807:ios:962588126eebab0933812a',
+    messagingSenderId: '1083781579807',
+    projectId: 'arpc-checklist',
+    databaseURL: 'https://arpc-checklist-default-rtdb.asia-southeast1.firebasedatabase.app',
   );
 }

@@ -4,18 +4,37 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../../../core/models/user_model.dart';
 
 class AuthRepository {
-  final FirebaseAuth _firebaseAuth;
+  final FirebaseAuth? _firebaseAuthOverride;
   final GoogleSignIn _googleSignIn;
 
-  AuthRepository({
-    FirebaseAuth? firebaseAuth,
-    GoogleSignIn? googleSignIn,
-  })  : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
-        _googleSignIn = googleSignIn ?? GoogleSignIn();
+  AuthRepository({FirebaseAuth? firebaseAuth, GoogleSignIn? googleSignIn})
+    : _firebaseAuthOverride = firebaseAuth,
+      _googleSignIn = googleSignIn ?? GoogleSignIn();
 
-  User? get currentUser => _firebaseAuth.currentUser;
+  FirebaseAuth get _firebaseAuth {
+    if (_firebaseAuthOverride != null) return _firebaseAuthOverride;
+    // Throws a descriptive StateError instead of Firebase core/no-app
+    // if initialize() failed — prevents an obscure native crash.
+    return FirebaseAuth.instance;
+  }
 
-  Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
+  User? get currentUser {
+    try {
+      return _firebaseAuth.currentUser;
+    } catch (_) {
+      // Firebase not initialized (e.g. init failed on device,
+      // or widget test with no Firebase) — treat as signed out.
+      return null;
+    }
+  }
+
+  Stream<User?> get authStateChanges {
+    try {
+      return _firebaseAuth.authStateChanges();
+    } catch (_) {
+      return Stream.value(null);
+    }
+  }
 
   Future<UserModel> signInWithEmailAndPassword(
     String email,

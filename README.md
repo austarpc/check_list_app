@@ -1,6 +1,22 @@
 # muhasabat
 
-A new Flutter project.
+Muhasabat (মুহাসাবাত) is a daily Islamic self-accountability checklist app built with Flutter.
+
+## Build
+
+### Release APK
+
+```bash
+flutter pub get
+flutter build apk --release
+```
+
+The release APK is written to `build/app/outputs/flutter-apk/app-release.apk`.
+
+### GitHub Actions
+
+Pushing to `master` (or manually dispatching the **Build Release APK** workflow) builds a
+release APK and uploads it as the `muhasabat-release-apk` artifact.
 
 ## Getting Started
 
